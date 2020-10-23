@@ -1,4 +1,5 @@
-from condor_function import condor_function
+from condor_function import CondorFunction
+
 
 def condorize(f):
     return CondorFunction(f)

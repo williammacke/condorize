@@ -1,5 +1,6 @@
 from collections import deque
 import os
+import pickle
 
 
 #TODO: add mutex to prevent race conditions
@@ -12,7 +13,9 @@ _complete_tasks = {}
 _working_dir = ""
 
 
-def init():
+def init(working_dir, max_jobs=10):
+    _working_dir = working_dir
+    _max_jobs = max_jobs
     raise NotImplementedError
 
 
@@ -21,6 +24,9 @@ def close():
 
 
 def _submit_job(task):
+    filename = os.join_path(_working_dir, "job_tasks/", (task._id+".job"))
+    with open(filename, 'wb') as f:
+        pickle.dump(task, f)
     raise NotImplementedError
 
 
