@@ -1,6 +1,8 @@
 from collections import deque
 import os
 import pickle
+import threading
+import time
 
 
 #TODO: add mutex to prevent race conditions
@@ -11,15 +13,26 @@ _max_jobs = 0
 _running_tasks = {}
 _complete_tasks = {}
 _working_dir = ""
+_running = False
+_thread = None
 
 
 def init(working_dir, max_jobs=10):
+    global _working_dir
+    global _max_jobs
+    global _running
+    global _thread
     _working_dir = working_dir
     _max_jobs = max_jobs
-    raise NotImplementedError
+    _running = True
+    _thread = threading.Thread(target=_main_loop)
+    _thread.start()
+
+
 
 
 def close():
+    _running = False
     raise NotImplementedError
 
 
@@ -36,10 +49,15 @@ def _add_task(t):
 
 def _main_loop():
     complete_dir = os.join_path(_working_dir, "results/")
-    for k in _running_jobs:
-        #TODO: check for complete tasks
-    while _tasks and len(_running_jobs) < _max_jobs:
-        t = _tasks.pop_left()
-        _running_tasks[t._id] = t
-        _submit_job(t)
-    #TODO: add sleep statement
+    while _running:
+        for n in os.listdir(complete_dir):
+            nid = n.split('_')[0]
+            with open(complete_dir + n, 'rb') as f:
+                result = pickle.load(f)
+            _running_tasks[nid].result = result
+            del _running_tasks[nid]
+        while _tasks and len(_running_jobs) < _max_jobs:
+            t = _tasks.pop_left()
+            _running_tasks[t._id] = t
+            _submit_job(t)
+        time.sleep(5)
